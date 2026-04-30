@@ -5,7 +5,8 @@ WORKDIR /var/www/html
 # Install system deps + PHP extensions
 RUN apt-get update && apt-get install -y \
     git curl unzip zip libzip-dev \
-    && docker-php-ext-install pdo pdo_sqlite zip \
+    sqlite3 libsqlite3-dev \
+    && docker-php-ext-install zip pdo pdo_sqlite
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
