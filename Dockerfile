@@ -1,21 +1,30 @@
-FROM php:8.2-cli
+FROM php:8.2-apache
 
-WORKDIR /app
+WORKDIR /var/www/html
 
+# Install system deps + PHP extensions
 RUN apt-get update && apt-get install -y \
-    git curl unzip libzip-dev zip \
-    && docker-php-ext-install zip pdo pdo_sqlite
+    git curl unzip zip libzip-dev \
+    && docker-php-ext-install pdo pdo_sqlite zip \
+    && a2enmod rewrite \
+    && rm -rf /var/lib/apt/lists/*
 
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Copy project
 COPY . .
 
-RUN composer install
+# Laravel setup
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader \
+    && touch database/database.sqlite \
+    && chown -R www-data:www-data /var/www/html \
+    && php artisan key:generate \
+    && php artisan migrate --force
 
-RUN touch database/database.sqlite
+# Point Apache to /public
+RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
-RUN php artisan key:generate
+EXPOSE 80
 
-RUN php artisan migrate --force
-
-CMD php artisan serve --host=0.0.0.0 --port=10000
+CMD ["apache2-foreground"]
