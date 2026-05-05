@@ -13,7 +13,7 @@ public function up(): void
 {
     Schema::create('daily_stats', function (Blueprint $table) {
         $table->id();
-        $table->string('user_id'); 
+        $table->string('user_id')->index(); 
         $table->integer('protein');
         $table->integer('calories');
         $table->integer('steps');
